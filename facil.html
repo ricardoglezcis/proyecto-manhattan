@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>PROYECTO MANHATTAN - FÁCIL</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; }
+        #myCanvas { width: 100vw; height: 100vh; display: block; }
+        .pantalla {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: rgba(0, 0, 0, 0.7); color: white;
+        }
+        h1 { font-size: 50px; color: #FFE100; text-shadow: 3px 3px #000; font-family: 'Century Gothic', sans-serif; text-align: center; }
+        button {
+            background-color: #e65c00; border: none; color: black; font-size: 25px; font-family: Impact, sans-serif; 
+            padding: 15px 40px; margin: 10px; cursor: pointer; border-radius: 10px; transition: background-color 0.3s;
+        }
+        button:hover { background-color: #28a745; }
+        
+        /* HUD GENERAL MEJORADO */
+        #interfaz {
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%); 
+            background: rgba(10, 10, 10, 0.85); border: 2px solid #FFE100; padding: 12px 40px; border-radius: 20px;
+            color: white; font-size: 26px; font-weight: bold; font-family: 'Century Gothic', sans-serif; display: none; z-index: 5; 
+            text-shadow: 2px 2px 4px black; box-shadow: 0px 5px 15px rgba(0,0,0,0.6);
+            pointer-events: none; justify-content: center; align-items: center; gap: 40px; white-space: nowrap;
+        }
+        
+        /* DISEÑO RADIO */
+        #panelRadio {
+            position: fixed; left: 20px; top: 50%; transform: translateY(-50%); gap: 8px; display: none; 
+            flex-direction: column; align-items: center; background: rgba(10,10,10,0.85); padding: 15px;
+            border-radius: 15px; border: 2px solid #00FF04; font-family: 'Century Gothic', sans-serif; color: white; z-index: 5;
+            box-shadow: 0px 0px 15px rgba(0, 255, 4, 0.4);
+        }
+        .estacion { font-size: 20px; font-weight: bold; padding: 8px 20px; border-radius: 8px; transition: all 0.3s; cursor: pointer; border: 1px solid transparent; width: 100%; text-align: center; box-sizing: border-box; }
+        .estacion:hover { border-color: #00FF04; }
+        .estacion.activa { background-color: #00FF04; color: black; text-shadow: none; box-shadow: 0 0 10px #00FF04; transform: scale(1.05); }
+
+        /* PANEL CONTROLES */
+        #panelControles {
+            position: fixed; right: 20px; top: 50%; transform: translateY(-50%); display: none; 
+            flex-direction: column; align-items: center; background: rgba(10,10,10,0.9); padding: 25px;
+            border-radius: 15px; border: 2px solid #FFE100; font-family: 'Century Gothic', sans-serif; color: white; z-index: 5;
+            box-shadow: 0px 0px 20px rgba(255, 225, 0, 0.6); text-align: center;
+        }
+        .tecla { display: inline-block; background: #333; border: 2px solid #888; border-radius: 5px; padding: 5px 12px; margin: 3px; font-weight: bold; font-family: Impact, sans-serif; font-size: 18px; }
+
+        /* INDICADOR ESC PAUSA */
+        #infoPausa {
+            position: fixed; top: 20px; left: 20px; display: none; background: rgba(0,0,0,0.8); padding: 15px 25px; 
+            border-radius: 10px; border: 2px solid white; color: white; font-family: 'Century Gothic', sans-serif; z-index: 5;
+            font-size: 24px; text-shadow: 2px 2px black; cursor: pointer;
+        }
+
+        /* Capas de Efectos Visuales Separadas */
+        #efectoFlasheo, #efectoEscudo, #efectoBoost {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 8;
+            box-shadow: inset 0 0 0px transparent;
+        }
+        #efectoFlasheo { transition: box-shadow 0.2s ease-out; z-index: 9; }
+        #efectoEscudo { transition: box-shadow 0.3s ease-in-out; }
+        #efectoBoost { transition: box-shadow 0.3s ease-in-out; }
+    </style>
+</head>
+<body>
+    <div id="btnFullscreen" style="position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 8px; border: 2px solid white; color: white; font-family: 'Century Gothic', sans-serif; z-index: 50; font-size: 18px; text-shadow: 1px 1px black; cursor: pointer; font-weight: bold; transition: transform 0.2s;">
+        [ CLICK ] PANTALLA COMPLETA
+    </div>
+
+    <div id="pantallaCountdown" class="pantalla" style="display: flex; background: rgba(0,0,0,0.8); z-index: 20;">
+        <h1 id="textoCountdown" style="font-size: 150px; color: #FFE100; text-shadow: 5px 5px black; margin: 0; transition: transform 0.2s;">¿Preparado?</h1>
+    </div>
+    <div id="pantallaPausa" class="pantalla" style="display: none; z-index: 20; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);">
+        <h1 style="font-size: 70px; margin-bottom: 20px;">PAUSA</h1>
+        <div style="font-family: 'Century Gothic', sans-serif; font-size: 25px; color: white; margin-bottom: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+            <label for="controlVolumen">Volumen de la Música</label>
+            <input type="range" id="controlVolumen" min="0" max="1" step="0.05" value="0.4" style="width: 250px; cursor: pointer;">
+        </div>
+        <div style="display: flex; gap: 30px;">
+            <button id="btnReanudar">REANUDAR</button>
+            <button id="btnSalirInicio" onclick="window.location.href='index.html'">MENÚ PRINCIPAL</button>
+        </div>
+    </div>
+    
+    <!-- PANTALLA GAME OVER -->
+    <div id="pantallaGameOver" class="pantalla" style="display: none; z-index: 100; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);">
+        <div style="background: linear-gradient(145deg, rgba(20,20,20,0.95), rgba(0,0,0,0.95)); padding: 40px 50px; border-radius: 20px; border: 3px solid #FFE100; box-shadow: 0px 0px 30px rgba(255, 225, 0, 0.4); text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 450px;">
+            <h1 id="tituloFin" style="font-size: 60px; margin-top: 0; margin-bottom: 10px; color: red; text-shadow: 2px 2px black;">FIN DEL JUEGO</h1>
+            <div id="motivoFin" style="font-size: 22px; color: #E8E8E8; margin-bottom: 25px; font-family: 'Century Gothic', sans-serif;"></div>
+            <div style="background: rgba(0,0,0,0.6); border: 2px solid white; border-radius: 15px; padding: 20px; width: 100%; margin-bottom: 30px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); box-sizing: border-box;">
+                <div style="font-size: 20px; color: #FFE100; font-family: 'Century Gothic', sans-serif; font-weight: bold; margin-bottom: 5px;">PUNTUACIÓN TOTAL</div>
+                <div id="puntuacionFinal" style="font-size: 60px; color: #00FF04; font-family: Impact, sans-serif; text-shadow: 2px 2px 4px black; margin: 0;">0</div>
+            </div>
+            <div style="display: flex; gap: 20px; width: 100%; justify-content: center;">
+                <button onclick="location.reload()" style="margin: 0; width: 100%; font-size: 22px;">REINICIAR</button>
+                <button onclick="window.location.href='index.html'" style="margin: 0; width: 100%; font-size: 22px; background-color: #DC3545;">SALIR</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="infoPausa"><b>[ ESC ]</b> PAUSAR</div>
+
+    <div id="interfaz">
+        <div style="display:flex; align-items:center;">
+            <span style="color: #FFE100;">VIDA:</span> 
+            <div style="width: 220px; height: 28px; background: rgba(40,40,40,0.9); border: 3px solid white; box-shadow: inset 0 0 10px black, 0 0 10px rgba(0,0,0,0.5); margin-left: 15px; border-radius: 8px; overflow: hidden;">
+                <div id="barraSalud" style="width: 100%; height: 100%; background: #00FF04; transition: width 0.2s, background-color 0.2s; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.3);"></div>
+            </div>
+        </div>
+        <div><span style="color: #FFE100;">TIEMPO:</span> <span id="tiempoHUD" style="color: white;">2:00</span></div>
+        <div><span style="color: #FFE100;">PUNTOS:</span> <span id="puntosHUD" style="color: #00FF04;">0</span></div>
+    </div>
+    
+    <div id="panelRadio">
+        <div style="font-size: 16px; color: #00FF04; margin-bottom: 5px; font-weight: bold; text-align: center;">📻 RADIO</div>
+        <div id="ch1" class="estacion activa">1</div><div id="ch2" class="estacion">2</div>
+        <div id="ch3" class="estacion">3</div><div id="ch4" class="estacion">4</div><div id="ch5" class="estacion">5</div>
+    </div>
+
+    <div id="panelControles">
+        <div style="font-size: 20px; color: #FFE100; margin-bottom: 15px; font-weight: bold; text-align: center;">🎮 CONTROLES</div>
+        <div style="margin-bottom: 15px;">
+            <div style="font-size: 14px; color: #00FF04; margin-bottom: 5px;">SUBIR / BAJAR</div>
+            <span class="tecla">W</span> o <span class="tecla">⬆️</span><br>
+            <span class="tecla">S</span> o <span class="tecla">⬇️</span>
+        </div>
+        <div>
+            <div style="font-size: 14px; color: #00FF04; margin-bottom: 5px;">IZQ / DER</div>
+            <span class="tecla">A</span> o <span class="tecla">⬅️</span><br>
+            <span class="tecla">D</span> o <span class="tecla">➡️</span>
+        </div>
+    </div>
+
+    <!-- Efectos -->
+    <div id="efectoFlasheo"></div>
+    <div id="efectoEscudo"></div>
+    <div id="efectoBoost"></div>
+
+    <audio id="sndHover"><source src="./audio/hover.wav"></audio>
+    <audio id="sndClick"><source src="./audio/click.wav"></audio>
+
+    <audio id="sonidoPato"><source src="./audio/pato.mp3"></audio>
+    <audio id="sonidoGasolina"><source src="./audio/gasolina.mp3"></audio>
+    <audio id="sonidoTuerca"><source src="./audio/tuerca.mp3"></audio>
+    <audio id="sonidoGlobos"><source src="./audio/globos.mp3"></audio>
+    <audio id="sonidoViento" loop><source src="./audio/viento.mp3"></audio>
+    <audio id="sonidoPerder"><source src="./audio/derrota2.mp3"></audio>
+    <audio id="sonidoVictoria"><source src="./audio/victoria.mp3"></audio>
+    <audio id="sonidoEscudo"><source src="./audio/escudo.wav"></audio>
+    <audio id="sonidoBoost"><source src="./audio/boost.wav"></audio>
+
+    <canvas id="myCanvas"></canvas>
+
+    <script type="importmap">
+    {
+        "imports":{
+            "three": "./js/three.module.js",
+            "cannon-es": "./js/cannon-es.js"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import * as CANNON from 'cannon-es';
+        import PATOO from "./objetos/pato.js";
+        import GLOBOSS from "./objetos/globos.js";
+        import Gasolina from "./objetos/gasolina.js";
+        import Icono from "./objetos/IconoPunto.js";
+        import NAVENAT from "./objetos/avionetaamarilla.js";
+        import NAVEDAVID from "./objetos/AVIONETA.js";
+        import NAVEANGIE from "./objetos/avionetaangie.js";
+        import NAVEGUSTAVO from "./objetos/NaveGustavo.js";
+        import NAVERICARDO from "./objetos/supercerdo.js";
+        import NAVEGADIEL from "./objetos/avionLG.js";
+        import NUBE from "./objetos/nube.js";
+        import ARBOL from "./objetos/arbol.js";
+        import ESCUDO from "./objetos/escudo.js";
+        import ALAS from "./objetos/alas.js";
+
+        var estadoJuego = "CUENTA_REGRESIVA";
+        var puntos = 0; var vida = 100; var tiempoRestante = 120;
+        
+        var velocidadMundo = 0.6; 
+        
+        // POWER UPS 
+        var velocidadNaveBase = 30;
+        let velocidadNave = velocidadNaveBase; 
+        let boostVelocidadMundo = 0;
+        let escudoActivo = false;
+
+        let timeoutEscudo;
+        let timeoutVelocidad;
+
+        // MATERIALES HITBOX FÁCIL
+        const matHitboxPlayer = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        const matHitboxEnemigo = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        const matHitboxItem = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
+
+        const geomEscudo = new THREE.SphereGeometry(4, 16, 16);
+        const matEscudo = new THREE.MeshBasicMaterial({ color: 0x0044FF, transparent: true, opacity: 0.6, wireframe: true });
+        let mallaEscudo = new THREE.Mesh(geomEscudo, matEscudo);
+        mallaEscudo.visible = false; 
+
+        function activarEscudo() {
+            escudoActivo = true;
+            mallaEscudo.visible = true;
+            document.getElementById('efectoEscudo').style.boxShadow = 'inset 0 0 200px rgba(0, 68, 255, 0.6)'; 
+            let snd = document.getElementById('sonidoEscudo'); if(snd) { snd.currentTime = 0; snd.play(); }
+            
+            clearTimeout(timeoutEscudo); 
+            timeoutEscudo = setTimeout(() => {
+                escudoActivo = false;
+                mallaEscudo.visible = false;
+                document.getElementById('efectoEscudo').style.boxShadow = 'inset 0 0 0px transparent'; 
+            }, 5000); 
+        }
+
+        function activarVelocidad() {
+            velocidadNave = velocidadNaveBase + 20;  
+            boostVelocidadMundo = 0.6; 
+            document.getElementById('efectoBoost').style.boxShadow = 'inset 0 0 200px rgba(255, 255, 255, 0.8)';
+            let snd = document.getElementById('sonidoBoost'); if(snd) { snd.currentTime = 0; snd.play(); }
+
+            clearTimeout(timeoutVelocidad); 
+            timeoutVelocidad = setTimeout(() => {
+                velocidadNave = velocidadNaveBase;   
+                boostVelocidadMundo = 0; 
+                document.getElementById('efectoBoost').style.boxShadow = 'inset 0 0 0px transparent';
+            }, 4000); 
+        }
+
+        function flashearPantalla(color) {
+            const pantallaFlash = document.getElementById('efectoFlasheo');
+            pantallaFlash.style.boxShadow = `inset 0 0 300px ${color}`;
+            setTimeout(() => { pantallaFlash.style.boxShadow = 'inset 0 0 0px transparent'; }, 300);
+        }
+
+        var setlistsNaves = {
+            abeja: ["./musica/nat1.MP3", "./musica/nat2.MP3", "./musica/nat3.MP3", "./musica/nat4.MP3", "./musica/nat5.MP3"],
+            kr27bb: ["./musica/dav1.MP3", "./musica/dav2.MP3", "./musica/dav3.MP3", "./musica/dav4.MP3", "./musica/dav5.MP3"],
+            jetpack: ["./musica/ang1.MP3", "./musica/ang2.MP3", "./musica/ang3.MP3", "./musica/ang4.MP3", "./musica/ang5.MP3"],
+            ovni: ["./musica/gus1.MP3", "./musica/gus2.MP3", "./musica/gus3.MP3", "./musica/gus4.MP3", "./musica/gus5.MP3"],
+            superchancho: ["./musica/ric1.mp3", "./musica/ric2.mp3", "./musica/ric3.mp3", "./musica/ric4.mp3", "./musica/ric5.mp3"],
+            magenta: ["./musica/n1c1.mp3", "./musica/n1c2.mp3", "./musica/n1c3.mp3", "./musica/n1c4.mp3", "./musica/n1c5.mp3"]
+        };
+        var setlistActual = setlistsNaves.abeja;
+        var estacionActual = 0;
+        var audioListener = new THREE.AudioListener();
+        var radioSound = new THREE.Audio(audioListener);
+        var audioLoader = new THREE.AudioLoader();
+
+        var pantallaGameOver = document.getElementById('pantallaGameOver');
+        var interfazHUD = document.getElementById('interfaz');
+
+        var renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('myCanvas'), antialias: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x87CEEB);
+
+        var scene = new THREE.Scene();
+        var textureLoader = new THREE.TextureLoader();
+        scene.background = textureLoader.load('./img/cielo2.jpg');
+
+        var camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 20, 21);
+        camera.lookAt(0, 2, -10);
+        camera.add(audioListener);
+
+        scene.fog = new THREE.Fog(0x92C5FC, 1, 350);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        var luzEfecto = new THREE.PointLight(0xFFFFFF, 1);
+        luzEfecto.position.set(40, 60, -30); scene.add(luzEfecto);
+
+        var grid = new THREE.GridHelper(400, 40, 0xffffff, 0x444444);
+
+        const world = new CANNON.World();
+        world.gravity.set(0, 0, 0);
+
+        const shapeMuro = new CANNON.Box(new CANNON.Vec3(1, 100, 100));
+        const shapeMuro2 = new CANNON.Box(new CANNON.Vec3(100, 1, 100));
+        
+        const muroIzq = new CANNON.Body({ mass: 0 }); muroIzq.addShape(shapeMuro); muroIzq.position.set(-22, 2, 5); world.addBody(muroIzq);
+        const muroDer = new CANNON.Body({ mass: 0 }); muroDer.addShape(shapeMuro); muroDer.position.set(22, 2, 5); world.addBody(muroDer);
+        const muroArr = new CANNON.Body({ mass: 0 }); muroArr.addShape(shapeMuro2); muroArr.position.set(0, 18, 5); world.addBody(muroArr);
+        const muroAbj = new CANNON.Body({ mass: 0 }); muroAbj.addShape(shapeMuro2); muroAbj.position.set(0, 0.5, 5); world.addBody(muroAbj);
+
+        const abeja = NAVENAT({x:0, y:-1, z:0});
+        const kr27bb = NAVEDAVID({x:0, y:-1, z:0}); kr27bb.scale.set(0.3, 0.3, 0.3); kr27bb.rotation.set(0, 3.14, 0);
+        const jetpack = NAVEANGIE({x:0, y:-1, z:0}); jetpack.scale.set(0.2, 0.2, 0.2); jetpack.rotation.set(0, 3.14, 0);
+        const ovni = NAVEGUSTAVO({x:0, y:-1, z:0}); ovni.scale.set(0.5, 0.5, 0.5); ovni.rotation.set(0, 3.14, 0);
+        const superchancho = NAVERICARDO({x:0, y:1.5, z:0}); superchancho.scale.set(1, 1, 1); superchancho.rotation.set(0, 1.57, 0);
+        const magenta = NAVEGADIEL({x:0, y:0, z:0}); magenta.scale.set(0.15, 0.15, 0.15); magenta.rotation.set(0, 3.14, 0);
+
+        var avionetaContenedor = new THREE.Group();
+        avionetaContenedor.scale.set(1, 1, 1); avionetaContenedor.rotation.set(0,0,0);
+        avionetaContenedor.add(mallaEscudo); 
+        scene.add(avionetaContenedor);
+
+        const naveSeleccionada = localStorage.getItem('naveSeleccionada') || 'abeja';
+        if (naveSeleccionada === 'abeja') { avionetaContenedor.add(abeja); setlistActual = setlistsNaves.abeja; }
+        else if (naveSeleccionada === 'kr27bb') { avionetaContenedor.add(kr27bb); setlistActual = setlistsNaves.kr27bb; }
+        else if (naveSeleccionada === 'jetpack') { avionetaContenedor.add(jetpack); setlistActual = setlistsNaves.jetpack; }
+        else if (naveSeleccionada === 'ovni') { avionetaContenedor.add(ovni); setlistActual = setlistsNaves.ovni; }
+        else if (naveSeleccionada === 'superchancho') { avionetaContenedor.add(superchancho); setlistActual = setlistsNaves.superchancho; }
+        else if (naveSeleccionada === 'magenta') { avionetaContenedor.add(magenta); setlistActual = setlistsNaves.magenta; }
+
+        const avionetaBody = new CANNON.Body({ mass: 1, shape: new CANNON.Box(new CANNON.Vec3(1.2, 0.8, 2)), position: new CANNON.Vec3(0, 2,5) });
+        world.addBody(avionetaBody);
+        
+        // HITBOX VISUAL JUGADOR
+        const visualHitboxAvioneta = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 4), matHitboxPlayer);
+        scene.add(visualHitboxAvioneta);
+
+        avionetaBody.addEventListener('collide', (event) => {
+            if (event.body.esObstaculo) {
+                if (escudoActivo) {
+                    event.body.position.z = -150 - (Math.random() * 100);
+                    event.body.position.x = (Math.random() - 0.5) * 40;
+                    return; 
+                }
+
+                if (event.body.dano === 20) { let snd = document.getElementById('sonidoPato'); snd.currentTime = 0; snd.play(); }
+                if (event.body.dano === 10) { let snd = document.getElementById('sonidoGlobos'); snd.currentTime = 0; snd.play(); }
+                
+                flashearPantalla('rgba(255, 0, 0, 0.8)');
+                vida -= event.body.dano;
+                event.body.position.z = -150 - (Math.random() * 100);
+                event.body.position.x = (Math.random() - 0.5) * 40;
+            }
+        });
+
+        const globosimport = GLOBOSS({x:0, y:-10, z:0});
+        var grupoGlobos = new THREE.Group(); grupoGlobos.add(globosimport); 
+        grupoGlobos.scale.set(.7, .7, .7); 
+        scene.add(grupoGlobos);
+        const globosBody = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, position: new CANNON.Vec3((Math.random() - 0.5) * 40, 2, -100) });
+        globosBody.addShape(new CANNON.Sphere(2.5), new CANNON.Vec3(0, 3, 0));
+        globosBody.collisionResponse = false; globosBody.esObstaculo = true; globosBody.dano = 10; 
+        world.addBody(globosBody);
+        
+        // HITBOX VISUAL GLOBOS
+        const visualHitboxGlobos = new THREE.Mesh(new THREE.SphereGeometry(2.5, 8, 8), matHitboxEnemigo);
+        scene.add(visualHitboxGlobos);
+
+        var grupoPatos = new THREE.Group(); var patoEnemigo = PATOO({x: 0, y: 0, z: 0}); 
+        grupoPatos.add(patoEnemigo); 
+        scene.add(grupoPatos);
+        const patoBody = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, shape: new CANNON.Sphere(3), position: new CANNON.Vec3((Math.random() - 0.5) * 40, 2, -150) });
+        patoBody.collisionResponse = false; patoBody.esObstaculo = true; patoBody.dano = 20; 
+        world.addBody(patoBody);
+        
+        // HITBOX VISUAL PATOS
+        const visualHitboxPato = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 8), matHitboxEnemigo);
+        scene.add(visualHitboxPato);
+
+        var geometry01 = new THREE.BoxGeometry(800, 2, 1000);
+        var textureLoader = new THREE.TextureLoader();
+        var texturaPiso = textureLoader.load('./img/piso.jpg'); 
+        var material01 = new THREE.MeshLambertMaterial({ map: texturaPiso, side: THREE.DoubleSide });
+        var base = new THREE.Mesh(geometry01, material01);
+        scene.add(base); base.position.set(0, -45, 0);
+
+        var nubesArray = []; var cantidadNubes = 30; 
+        for (let i = 0; i < cantidadNubes; i++) {
+            let randomX = Math.random() < 0.5 ? -35 - (Math.random() * 50) : 35 + (Math.random() * 50); 
+            let randomY = 30 + Math.random() * 10;    
+            let randomZ = -50 - Math.random() * 250;   
+            let nubeInstancia = NUBE({ x: randomX, y: randomY, z: randomZ });
+            let escalaRandom = 0.4 + Math.random() * 0.8;
+            nubeInstancia.scale.set(escalaRandom, escalaRandom, escalaRandom);
+            scene.add(nubeInstancia); nubesArray.push(nubeInstancia); 
+        }
+
+        var arbolesArray = []; var cantidadArboles = 210; 
+        for (let i = 0; i < cantidadArboles; i++) {
+            let lado = Math.random() > 0.5 ? 1 : -1;
+            let randomX = lado * (25 + Math.random() * 300); 
+            let randomY = -45; 
+            let randomZ = -50 - Math.random() * 300;   
+            let arbolInstancia = ARBOL({ x: randomX, y: randomY, z: randomZ });
+            let escalaRandom = 0.3 + Math.random() * 0.3;
+            arbolInstancia.scale.set(escalaRandom, escalaRandom, escalaRandom);
+            scene.add(arbolInstancia); arbolesArray.push(arbolInstancia); 
+        }
+
+        const powerupsData = []; const vidaData = []; const puntosData = [];
+
+        var gas = Gasolina({x: 0, y: 0, z: 0}); scene.add(gas); gas.scale.set(.15, .15, .15);
+        var objEscudoMesh = ESCUDO({x: 0, y: 0, z: 0}); scene.add(objEscudoMesh); objEscudoMesh.scale.set(0.3, 0.3, 0.3); 
+        var objAlasMesh = ALAS({x: 0, y: 0, z: 0}); scene.add(objAlasMesh); objAlasMesh.scale.set(0.3, 0.3, 0.3); 
+
+        const arrayPowerups = [
+            { mesh: objEscudoMesh, tipo: 'escudo' }, 
+            { mesh: objAlasMesh, tipo: 'alas' }
+        ];
+
+        arrayPowerups.forEach(item => {
+            const shapePw = new CANNON.Sphere(3);
+            const bodyPw = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC });
+            bodyPw.addShape(shapePw); bodyPw.collisionResponse = false; world.addBody(bodyPw);
+            
+            const visualHitboxPw = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 8), matHitboxItem); scene.add(visualHitboxPw);
+            let objData = { mesh: item.mesh, body: bodyPw, tipo: item.tipo, debugMesh: visualHitboxPw }; 
+            powerupsData.push(objData); moverObjeto(objData); 
+        });
+
+        const puntobj = [gas]; 
+        puntobj.forEach(obstapunto => {
+            const obstacleShape2 = new CANNON.Sphere(2);
+            const obstacleBody2 = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC });
+            obstacleBody2.addShape(obstacleShape2); obstacleBody2.position.copy(obstapunto.position); obstacleBody2.collisionResponse = false;
+            world.addBody(obstacleBody2);
+            
+            const visualHitboxGas = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), matHitboxItem); scene.add(visualHitboxGas);
+            let objData = { mesh: obstapunto, body: obstacleBody2, debugMesh: visualHitboxGas }; vidaData.push(objData); moverObjeto(objData);
+        });
+
+        var Punto = Icono({x: 0, y: 0, z: 0}); scene.add(Punto);
+        var Punto2 = Icono({x: 0, y: 0, z: 0}); scene.add(Punto2);
+
+        const iconosObj = [Punto, Punto2]; 
+        iconosObj.forEach(iconoMesh => {
+            const shapePunto = new CANNON.Sphere(3);
+            const bodyPunto = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC });
+            bodyPunto.addShape(shapePunto); bodyPunto.collisionResponse = false; world.addBody(bodyPunto);
+            
+            const visualHitboxPunto = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 8), matHitboxItem); scene.add(visualHitboxPunto);
+            let objData = { mesh: iconoMesh, body: bodyPunto, debugMesh: visualHitboxPunto }; puntosData.push(objData); moverObjeto(objData);
+        });
+
+        const radioDeteccion = 7;
+        
+        function updateGasolina() {
+            vidaData.forEach(obj => {
+                obj.mesh.position.z += (velocidadMundo + boostVelocidadMundo);
+                obj.body.position.z += (velocidadMundo + boostVelocidadMundo);
+                if (obj.mesh.position.z > 25) { moverObjeto(obj); }
+                const distancia = obj.mesh.position.distanceTo(avionetaContenedor.position);
+                if (distancia < radioDeteccion) {
+                    let snd = document.getElementById('sonidoGasolina'); snd.currentTime = 0; snd.play();
+                    flashearPantalla('rgba(0, 255, 0, 0.8)');
+                    vida += 10; if (vida > 100) vida = 100;
+                    moverObjeto(obj); obj.body.position.copy(obj.mesh.position);
+                }
+            });
+        }
+
+        function updateIconos() {
+            puntosData.forEach(obj => {
+                obj.mesh.position.z += (velocidadMundo + boostVelocidadMundo);
+                obj.body.position.z += (velocidadMundo + boostVelocidadMundo);
+                if (obj.mesh.position.z > 25) { moverObjeto(obj); }
+                const distancia = obj.mesh.position.distanceTo(avionetaContenedor.position);
+                if (distancia < radioDeteccion) {
+                    let snd = document.getElementById('sonidoTuerca'); snd.currentTime = 0; snd.play();
+                    flashearPantalla('rgba(255, 215, 0, 0.8)');
+                    puntos += 10;
+                    moverObjeto(obj); obj.body.position.copy(obj.mesh.position);
+                }
+            });
+        }
+
+        function updatePowerUps() {
+            powerupsData.forEach(obj => {
+                obj.mesh.position.z += (velocidadMundo + boostVelocidadMundo);
+                obj.body.position.z += (velocidadMundo + boostVelocidadMundo);
+                if (obj.mesh.position.z > 25) { moverObjeto(obj); }
+                const distancia = obj.mesh.position.distanceTo(avionetaContenedor.position);
+
+                if (distancia < radioDeteccion) {
+                    if (obj.tipo === 'escudo') { activarEscudo(); } 
+                    else if (obj.tipo === 'alas') { activarVelocidad(); }
+                    moverObjeto(obj); obj.body.position.copy(obj.mesh.position);
+                }
+            });
+        }
+
+        function moverObjeto(obj) {
+            let nuevaPosicion = new THREE.Vector3(); let posicionValida = false; let intentos = 0;
+            const todosLosObjetos = [...vidaData, ...puntosData, ...powerupsData];
+
+            while (!posicionValida && intentos < 50) {
+                let randX = (Math.random() - 0.5) * 40;     
+                let randY = 2 + Math.random() * 8;          
+                let randZ = (obj.tipo === 'escudo') ? -1200 - (Math.random() * 800) : -100 - (Math.random() * 200);
+
+                nuevaPosicion.set(randX, randY, randZ);
+                let distanciaNave = nuevaPosicion.distanceTo(avionetaContenedor.position);
+                let muyCercaDeOtroObjeto = false;
+                
+                for (let i = 0; i < todosLosObjetos.length; i++) {
+                    let otroObjeto = todosLosObjetos[i];
+                    if (otroObjeto.mesh && otroObjeto.mesh !== obj.mesh) {
+                        let distancia = nuevaPosicion.distanceTo(otroObjeto.mesh.position);
+                        if (distancia < 15) { muyCercaDeOtroObjeto = true; break; }
+                    }
+                }
+                if (distanciaNave > 20 && !muyCercaDeOtroObjeto) { posicionValida = true; }
+                intentos++;
+            }
+            obj.mesh.position.copy(nuevaPosicion); if (obj.body) { obj.body.position.copy(nuevaPosicion); }
+        }
+
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        btnFullscreen.onmouseover = () => { btnFullscreen.style.transform = 'scale(1.05)'; };
+        btnFullscreen.onmouseout = () => { btnFullscreen.style.transform = 'scale(1)'; };
+        btnFullscreen.onclick = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => { console.log(err.message); });
+                btnFullscreen.innerHTML = "[ CLICK ] SALIR PANTALLA COMPLETA";
+            } else {
+                document.exitFullscreen();
+                btnFullscreen.innerHTML = "[ CLICK ] PANTALLA COMPLETA";
+            }
+        };
+
+        window.onload = () => {
+            const pantallaCount = document.getElementById('pantallaCountdown');
+            const textoCount = document.getElementById('textoCountdown');
+            let conteo = 3;
+            setTimeout(() => {
+                let intervalo = setInterval(() => {
+                    if(conteo > 0) { textoCount.innerText = conteo; conteo--; } 
+                    else if (conteo === 0) { textoCount.innerText = "¡Comienza!"; conteo--; } 
+                    else { clearInterval(intervalo); pantallaCount.style.display = 'none'; iniciarJuegoReal(); }
+                }, 1000);
+            }, 1000);
+        };
+
+        function iniciarJuegoReal() {
+            estadoJuego = "JUEGO";
+            interfazHUD.style.display = 'flex';
+            document.getElementById('panelRadio').style.display = 'flex';
+            document.getElementById('panelControles').style.display = 'flex';
+            document.getElementById('infoPausa').style.display = 'block';
+            let sndViento = document.getElementById('sonidoViento');
+            if (sndViento) { sndViento.volume = 0.6; sndViento.play(); }
+            reproducirEstacion(0);
+        }
+
+        function reproducirEstacion(indice) {
+            if (indice < 0 || indice > 4) return;
+            if (radioSound.isPlaying) { radioSound.stop(); }
+            estacionActual = indice;
+            let urlCancion = setlistActual[estacionActual];
+            audioLoader.load(urlCancion, function(buffer) {
+                radioSound.setBuffer(buffer);
+                radioSound.setLoop(true);
+                let volActual = parseFloat(document.getElementById('controlVolumen').value);
+                radioSound.setVolume(volActual);
+                radioSound.play();
+            }, undefined, function(err) { console.error("Error al cargar audio: ", urlCancion, err); });
+
+            for (let i = 1; i <= 5; i++) { document.getElementById('ch' + i).classList.remove('activa'); }
+            document.getElementById('ch' + (indice + 1)).classList.add('activa');
+        }
+
+        document.getElementById('controlVolumen').addEventListener('input', (e) => {
+            let volumen = parseFloat(e.target.value);
+            radioSound.setVolume(volumen);
+        });
+
+        document.getElementById('infoPausa').onclick = () => {
+            if (estadoJuego === "JUEGO") {
+                estadoJuego = "PAUSA";
+                document.getElementById('pantallaPausa').style.display = 'flex';
+                if (radioSound.isPlaying) radioSound.pause();
+                let sndViento = document.getElementById('sonidoViento');
+                if (sndViento) sndViento.pause();
+            }
+        };
+
+        var keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'Escape') {
+                if (estadoJuego === "JUEGO") {
+                    estadoJuego = "PAUSA";
+                    document.getElementById('pantallaPausa').style.display = 'flex';
+                    if (radioSound.isPlaying) radioSound.pause();
+                    let sndViento = document.getElementById('sonidoViento');
+                    if (sndViento) sndViento.pause();
+                } else if (estadoJuego === "PAUSA") { reanudarJuego(); }
+            }
+        });
+        window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+        
+        document.getElementById('btnReanudar').onclick = reanudarJuego;
+        function reanudarJuego() {
+            estadoJuego = "JUEGO";
+            document.getElementById('pantallaPausa').style.display = 'none';
+            if(!radioSound.isPlaying) radioSound.play();
+            let sndViento = document.getElementById('sonidoViento');
+            if (sndViento) sndViento.play();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (estadoJuego !== "JUEGO") return;
+            if (e.code === 'Digit1') reproducirEstacion(0);
+            if (e.code === 'Digit2') reproducirEstacion(1);
+            if (e.code === 'Digit3') reproducirEstacion(2);
+            if (e.code === 'Digit4') reproducirEstacion(3);
+            if (e.code === 'Digit5') reproducirEstacion(4);
+        });
+
+        var reloj = new THREE.Clock();
+        const inclinacionmax = THREE.MathUtils.degToRad(25);
+        const limitemapa = 20; const velocidaddesuavizado = 0.05;
+
+        function animate(dt) {
+            if (keys['KeyA'] || keys['ArrowLeft']) { avionetaBody.velocity.x = -velocidadNave; }
+            else if (keys['KeyD'] || keys['ArrowRight']) { avionetaBody.velocity.x = velocidadNave; }
+            else { avionetaBody.velocity.x = 0; }
+
+            if (keys['KeyW'] || keys['ArrowUp']) { avionetaBody.velocity.y = velocidadNave; }
+            else if (keys['KeyS'] || keys['ArrowDown']) { avionetaBody.velocity.y = -velocidadNave; }
+            else { avionetaBody.velocity.y = 0; }
+
+            let porcentajeX = avionetaBody.position.x / limitemapa;
+            let anguloObjetivoZ = porcentajeX * inclinacionmax;
+            avionetaContenedor.rotation.z += (anguloObjetivoZ - avionetaContenedor.rotation.z) * velocidaddesuavizado;
+
+            let targetFov = (velocidadNave > velocidadNaveBase) ? 80 : 70;
+            if (Math.abs(camera.fov - targetFov) > 0.1) {
+                camera.fov += (targetFov - camera.fov) * 0.1;
+                camera.updateProjectionMatrix();
+            }
+
+            grid.position.z += (velocidadMundo + boostVelocidadMundo);
+            if(grid.position.z > 50) grid.position.z = 0;
+
+            nubesArray.forEach(nube => {
+                nube.position.z += (velocidadMundo + boostVelocidadMundo); 
+                if (nube.position.z > 25) {
+                    nube.position.z = -250 - Math.random() * 100; 
+                    nube.position.x = Math.random() < 0.5 ? -35 - (Math.random() * 50) : 35 + (Math.random() * 50); 
+                    nube.position.y = 30 + Math.random() * 10; 
+                }
+            });
+
+            arbolesArray.forEach(arbol => {
+                arbol.position.z += (velocidadMundo + boostVelocidadMundo); 
+                if (arbol.position.z > 25) {
+                    arbol.position.z = -300 - Math.random() * 100; 
+                    let lado = Math.random() > 0.5 ? 1 : -1;
+                    arbol.position.x = lado * (25 + Math.random() * 300); 
+                }
+            });
+
+            updateGasolina(); updateIconos(); updatePowerUps();
+
+            //  REGENERACION DE OBSTACULOS 
+            globosBody.position.z += (velocidadMundo + boostVelocidadMundo);
+            if(globosBody.position.z > 25) { 
+                globosBody.position.z = -150 - (Math.random() * 100); 
+                globosBody.position.x = (Math.random() - 0.5) * 40; 
+            }
+            grupoGlobos.position.copy(globosBody.position);
+
+            patoBody.position.z += (velocidadMundo + boostVelocidadMundo);
+            if(patoBody.position.z > 25) { 
+                patoBody.position.z = -200 - (Math.random() * 100); 
+                patoBody.position.x = (Math.random() - 0.5) * 40; 
+            }
+            grupoPatos.position.copy(patoBody.position);
+
+            if (vida <= 0) {
+                estadoJuego = "GAMEOVER"; interfazHUD.style.display = 'none'; pantallaGameOver.style.display = 'flex';
+                document.getElementById('panelRadio').style.display = 'none'; document.getElementById('panelControles').style.display = 'none'; document.getElementById('infoPausa').style.display = 'none'; btnFullscreen.style.display = 'none';
+                document.getElementById('tituloFin').innerText = "FIN DEL JUEGO";
+                document.getElementById('tituloFin').style.color = "red";
+                document.getElementById('motivoFin').innerText = "¡Tu nave fue destruida!"; 
+                document.getElementById('puntuacionFinal').innerText = puntos;
+                if (radioSound.isPlaying) radioSound.stop(); let sndViento = document.getElementById('sonidoViento'); if (sndViento) sndViento.pause(); let sndPerder = document.getElementById('sonidoPerder'); sndPerder.currentTime = 0; sndPerder.play();
+            }
+
+            tiempoRestante -= dt;
+            var m = Math.floor(tiempoRestante / 60), s = Math.floor(tiempoRestante % 60);
+            document.getElementById('tiempoHUD').innerText = m + ":" + (s < 10 ? '0' : '') + s;
+
+            if (tiempoRestante <= 0 && vida > 0) {
+                estadoJuego = "GAMEOVER"; interfazHUD.style.display = 'none'; pantallaGameOver.style.display = 'flex';
+                document.getElementById('panelRadio').style.display = 'none'; document.getElementById('panelControles').style.display = 'none'; document.getElementById('infoPausa').style.display = 'none'; btnFullscreen.style.display = 'none';
+                document.getElementById('tituloFin').style.color = "#00FF04"; document.getElementById('tituloFin').innerText = "¡MISIÓN SUPERADA!";
+                document.getElementById('motivoFin').innerText = "¡Has escapado con éxito!";
+                document.getElementById('puntuacionFinal').innerText = puntos;
+                if (radioSound.isPlaying) radioSound.stop(); let sndViento = document.getElementById('sonidoViento'); if (sndViento) sndViento.pause(); let sndVictoria = document.getElementById('sonidoVictoria'); sndVictoria.currentTime = 0; sndVictoria.play();
+            }
+
+            const barraSalud = document.getElementById('barraSalud');
+            barraSalud.style.width = Math.max(0, vida) + "%";
+            if(vida > 50) barraSalud.style.backgroundColor = "#00FF04";
+            else if(vida > 25) barraSalud.style.backgroundColor = "#FFE100";
+            else barraSalud.style.backgroundColor = "#FF4444";
+
+            document.getElementById('puntosHUD').innerText = puntos;
+        }
+
+        function render() {
+            requestAnimationFrame(render);
+            let dt = reloj.getDelta();
+            if (estadoJuego === "JUEGO") {
+                world.step(1/60);
+                animate(dt);
+            }
+            avionetaContenedor.position.copy(avionetaBody.position);
+            
+            // hitboxes visuales en sus cuerpos de Cannon
+            visualHitboxAvioneta.position.copy(avionetaBody.position);
+            
+            visualHitboxGlobos.position.copy(globosBody.position);
+            visualHitboxGlobos.position.y += 3; //TIENE ESOT PORQUE NO SE MOSTRABA DONDE ERA EL HITBOX DE GLOBOS xd
+            
+            visualHitboxPato.position.copy(patoBody.position);
+            
+            powerupsData.forEach(obj => { if(obj.debugMesh) obj.debugMesh.position.copy(obj.body.position); });
+            vidaData.forEach(obj => { if(obj.debugMesh) obj.debugMesh.position.copy(obj.body.position); });
+            puntosData.forEach(obj => { if(obj.debugMesh) obj.debugMesh.position.copy(obj.body.position); });
+
+            renderer.render(scene, camera);
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // SONIDOS GLOBALES DE LA INTERFAZ (SHIN/SHAN) EN JUEGO
+        const botonesUI = document.querySelectorAll('button, .estacion, #infoPausa, #btnFullscreen');
+        const sndHover = document.getElementById('sndHover');
+        const sndClick = document.getElementById('sndClick');
+
+        botonesUI.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                if(sndHover) { sndHover.currentTime = 0; sndHover.play(); }
+            });
+            btn.addEventListener('click', () => {
+                if(sndClick) { sndClick.currentTime = 0; sndClick.play(); }
+            });
+        });
+
+        render();
+    </script>
+</body>
+</html>

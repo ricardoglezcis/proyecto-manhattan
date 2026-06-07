@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROYECTO MANHATTAN - MENÚ</title>
+
+    <link rel="icon" type="image/png" href="./img/favicon.png">
+
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #000; 
+            font-family: 'Century Gothic', sans-serif; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .pantalla {
+            position: absolute;
+            aspect-ratio: 1600 / 899;
+            max-width: 100vw;
+            max-height: 100vh;
+            width: 100%;
+            height: auto;
+            background-size: 100% 100%;
+            background-position: center; 
+            background-repeat: no-repeat;
+            display: flex;
+            z-index: 10;
+        }
+
+        /*  FONDOS   */
+        .fondo-menu { background-image: url('./img/bg_menu.jpeg'); } 
+        .fondo-instrucciones { background-image: url('./img/bg_instrucciones.jpeg'); }
+        .fondo-historia { background-image: url('./img/bg_historia.jpeg'); }
+        .fondo-seleccion { background-image: url('./img/bg_seleccion.jpeg'); }
+
+        /*   BOTONES CLICKEABLES  */
+        .zona-clickable {
+            position: absolute;
+            background: rgba(255, 255, 255, 0 ); 
+            border: none;
+            cursor: pointer;
+            z-index: 20;
+            border-radius: 40px;
+        }
+        .zona-clickable:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.02);
+            transition: all 0.2s ease;
+        }
+
+        /*  POSICIONES  DEL MENU  */
+        #btnHistoria { top: 1.9%; right: 2%; width: 12.5%; height: 6%; }
+        #btnSeleccionarNave { bottom: 6%; left: 10%; width: 18%; height: 8%; }
+        #btnJugar { bottom: 6%; left: 43%; width: 17.5%; height: 9%; border-radius: 50px; }
+        #btnins { bottom: 6%; right: 8%; width: 17%; height: 8%; }
+
+        /* Botones de Dificultad */
+        #contenedorDificultad {
+            display: none; position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+            flex-direction: row; gap: 15px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 20px;
+            border: 2px solid #FFE100; z-index: 30;
+        }
+        .btn-dif { font-family: Impact; font-size: 1.5vw; padding: 10px 20px; border-radius: 10px; cursor: pointer; color: white; border: 2px solid white; }
+        .btn-dif:hover { transform: scale(1.1); }
+
+        /*  RECUDRO DE INFORMACION DE DIFICULTAD  */
+        #infoDificultad {
+            display: none; position: absolute; bottom: 27%; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9); border: 2px solid #FFE100; color: white;
+            padding: 15px 25px; border-radius: 10px; font-family: 'Century Gothic', sans-serif;
+            font-size: 1.2vw; text-align: center; z-index: 40; width: 40%;
+            box-shadow: 0px 0px 15px rgba(255, 225, 0, 0.5); pointer-events: none;
+        }
+
+        /*  POSICIONES DE BOTONES VOLVER  */
+        .btn-volver { bottom: 3%; right: 3%; width: 10%; height: 7%; }
+
+        /*  POSICIONES DE HISTORIA E INSTRUCCIONES  */
+        #btnVozHistoria { top: 4%; left: 2%; width: 10%; height: 11%; border-radius: 10px; }
+        #btnVozInstrucciones { top: 4%; right: 2%; width: 10%; height: 11%; border-radius: 10px; }
+
+        /*  PANTALLA SELECCION DE NAVE  */
+        #contenedorNavesDerecha {
+            position: absolute; right: 4%; top: 12%; width: 45%; height: 80%;
+            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 4%;
+        }
+        .btn-nave-invisible {
+            background: transparent; border: none; cursor: pointer; border-radius: 15px;
+        }
+        .btn-nave-invisible:hover { background: rgba(255, 225, 0, 0.2); }
+        
+        #contenedorPreviewIzq {
+            position: absolute; left: 4%; top: 22%; width: 38%; height: 45%;
+        }
+        #preview3DCanvas { width: 100%; height: 100%; background: transparent; }
+        
+        #playlistNave {
+            position: absolute; left: 16.5%; top: 72%; width: 20%; height: 20%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: #00FF04; font-family: 'Century Gothic', sans-serif; font-size: 5vw; text-align: center; line-height: 1.2;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="menuPrincipal" class="pantalla fondo-menu" style="display: flex;">
+        <button id="btnHistoria" class="zona-clickable" title="Historia"></button>
+        <button id="btnSeleccionarNave" class="zona-clickable" title="Selección de Nave"></button>
+        <button id="btnJugar" class="zona-clickable" title="Jugar"></button>
+        <button id="btnins" class="zona-clickable" title="Instrucciones"></button>
+
+        <div id="infoDificultad">Pasa el cursor sobre una dificultad para ver sus detalles.</div>
+
+        <div id="contenedorDificultad">
+            <button id="btnDifFacil" class="btn-dif" style="background:#007BFF;" onclick="window.location.href='facil.html'">FÁCIL</button>
+            <button id="btnDifIntermedio" class="btn-dif" style="background:#28a745;" onclick="window.location.href='intermedio.html'">INTERMEDIO</button>
+            <button id="btnDifPesadilla" class="btn-dif" style="background:#DC3545;" onclick="window.location.href='pesadilla.html'">PESADILLA</button>
+        </div>
+    </div>
+
+    <div id="pantallaInstrucciones" class="pantalla fondo-instrucciones" style="display: none;">
+        <button id="btnVozInstrucciones" class="zona-clickable" title="Leer Instrucciones"></button>
+        <button id="btnVolverInst" class="zona-clickable btn-volver" title="Volver"></button>
+    </div>
+
+    <div id="pantallaHistoria" class="pantalla fondo-historia" style="display: none;">
+        <button id="btnVozHistoria" class="zona-clickable" title="Leer Historia"></button>
+        <button id="btnVolverHist" class="zona-clickable btn-volver" title="Volver"></button>
+    </div>
+
+    <div id="pantallaSeleccionarNave" class="pantalla fondo-seleccion" style="display: none;">
+        
+        <div id="contenedorPreviewIzq">
+            <canvas id="preview3DCanvas"></canvas>
+        </div>
+        <div id="playlistNave">
+            <span id="textoPlaylist" style="color: white; font-size: 1vw;">(Pasa el cursor<br>sobre una nave)</span>
+        </div>
+
+        <div id="contenedorNavesDerecha">
+            <button id="btnAbeja" class="btn-nave-invisible" title="Seleccionar Abeja"></button>
+            <button id="btnJetpack" class="btn-nave-invisible" title="Seleccionar Jetpack"></button>
+            <button id="btnKR27bb" class="btn-nave-invisible" title="Seleccionar KR27bb"></button>
+            <button id="btnMagenta" class="btn-nave-invisible" title="Seleccionar Magenta"></button>
+            <button id="btnOvni" class="btn-nave-invisible" title="Seleccionar OVNI"></button>
+            <button id="btnSuperchancho" class="btn-nave-invisible" title="Seleccionar Superchancho"></button>
+        </div>
+
+        <button id="btnVolverNave" class="zona-clickable btn-volver" title="Volver"></button>
+    </div>
+
+    // AUDIO UI DEL MENU 
+    <audio id="sndHover"><source src="./audio/hover.wav"></audio>
+    <audio id="sndClick"><source src="./audio/click.wav"></audio>
+
+    
+    <audio id="audioHistoria"><source src="./audio/historia.mp3"></audio> 
+    <audio id="audioInstrucciones"><source src="./audio/instrucciones.mp3"></audio> 
+
+
+    <audio id="sonidoOvni"><source src="./audio/ovni.wav"></audio>
+    <audio id="sonidoSuperchancho"><source src="./audio/cerdo.mp3"></audio>
+    <audio id="sonidoJetpack"><source src="./audio/jetpack.wav"></audio>
+    <audio id="sonidoKR27bb"><source src="./audio/kr27bb.wav"></audio>
+    <audio id="sonidoAbeja"><source src="./audio/abeja.wav"></audio>
+    <audio id="sonidoMagenta"><source src="./audio/magenta.wav"></audio>
+
+    <script type="importmap">
+    {
+        "imports":{
+            "three": "./js/three.module.js",
+            "cannon-es": "./js/cannon-es.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import NAVENAT from "./objetos/avionetaamarilla.js";
+        import NAVEDAVID from "./objetos/AVIONETA.js";
+        import NAVEANGIE from "./objetos/avionetaangie.js";
+        import NAVEGUSTAVO from "./objetos/NaveGustavo.js";
+        import NAVERICARDO from "./objetos/supercerdo.js";
+        import NAVEGADIEL from "./objetos/avionLG.js";
+
+        // SISTEMA 3D PARA PREVIEW DE NAVES
+        const canvas = document.getElementById('preview3DCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        
+        const contIzq = document.getElementById('contenedorPreviewIzq');
+        renderer.setSize(contIzq.clientWidth, contIzq.clientHeight);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+        camera.position.set(0, 0, 20); 
+        camera.lookAt(0, 0, 0);
+
+        const light = new THREE.AmbientLight(0xffffff, 0.9);
+        scene.add(light);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        const previewGroup = new THREE.Group();
+        scene.add(previewGroup);
+
+        const modelosPreview = {
+            abeja: NAVENAT({x:0, y:-5, z:0}),
+            kr27bb: NAVEDAVID({x:1, y:-1, z:0}),
+            jetpack: NAVEANGIE({x:0, y:0, z:0}),
+            ovni: NAVEGUSTAVO({x:.5, y:-8, z:0}),
+            superchancho: NAVERICARDO({x:1, y:0, z:0}),
+            magenta: NAVEGADIEL({x:2, y:-3, z:0})
+        };
+
+        // Ajustes de escala específicos
+        modelosPreview.abeja.scale.set(0.18, 0.18, 0.18);
+        modelosPreview.kr27bb.scale.set(1, 1, 1);
+        modelosPreview.jetpack.scale.set(0.3, 0.3, 0.3);
+        modelosPreview.ovni.scale.set(0.8, 0.8, 0.8);
+        modelosPreview.superchancho.scale.set(2, 2, 2);
+        modelosPreview.magenta.scale.set(0.35, 0.35, 0.35);
+
+
+        //   NAV DEL MENU
+        const btnJugar = document.getElementById('btnJugar');
+        const contenedorDificultad = document.getElementById('contenedorDificultad');
+        const infoDificultad = document.getElementById('infoDificultad');
+
+        btnJugar.onclick = () => {
+            if (contenedorDificultad.style.display === 'flex') {
+                contenedorDificultad.style.display = 'none';
+                infoDificultad.style.display = 'none'; 
+            } else {
+                contenedorDificultad.style.display = 'flex';
+            }
+        };
+
+        //    MOSTRAR LA INFO DE DIFICULTAD 
+        const descripcionesDificultad = {
+            facil: "<b style='color:#007BFF; font-size: 1.5vw;'>FÁCIL</b><br>El mundo avanza a una velocidad lenta y constante. Ideal para aprender los controles. Podrás ver las Hitboxes de todos los elementos en todo momento. No hay bombas rastreadoras.",
+            intermedio: "<b style='color:#28a745; font-size: 1.5vw;'>INTERMEDIO</b><br>Inicias a velocidad normal, pero el mundo se acelera un poco cada 30 segundos. No hay bombas rastreadoras. ¡Prepárate para sudar!",
+            pesadilla: "<b style='color:#DC3545; font-size: 1.5vw;'>PESADILLA</b><br>Velocidad extrema y peligros constantes. Cada 30 segundos la velocidad aumentará.¡Aquí si hay bombas rastreadoras!. Un desafío implacable de reflejos creado solo para los verdaderos expertos."
+        };
+
+        function configurarHoverDificultad(idBoton, clave) {
+            const btn = document.getElementById(idBoton);
+            btn.addEventListener('mouseover', () => {
+                infoDificultad.innerHTML = descripcionesDificultad[clave];
+                infoDificultad.style.display = 'block';
+            });
+            btn.addEventListener('mouseout', () => {
+                infoDificultad.style.display = 'none';
+            });
+        }
+
+        configurarHoverDificultad('btnDifFacil', 'facil');
+        configurarHoverDificultad('btnDifIntermedio', 'intermedio');
+        configurarHoverDificultad('btnDifPesadilla', 'pesadilla');
+
+        // Mostrar/Ocultar Instrucciones y Manejo de Audio
+        const audioInstrucciones = document.getElementById('audioInstrucciones');
+
+        document.getElementById('btnins').onclick = () => { 
+            document.getElementById('menuPrincipal').style.display = 'none';
+            document.getElementById('pantallaInstrucciones').style.display = 'flex'; 
+        };
+
+        document.getElementById('btnVozInstrucciones').onclick = () => {
+            if (audioInstrucciones.paused) {
+                audioInstrucciones.play();
+            } else {
+                audioInstrucciones.pause();
+            }
+        };
+
+        document.getElementById('btnVolverInst').onclick = () => { 
+            document.getElementById('pantallaInstrucciones').style.display = 'none'; 
+            document.getElementById('menuPrincipal').style.display = 'flex';
+            audioInstrucciones.pause();
+            audioInstrucciones.currentTime = 0; 
+        };
+        
+        // ASISTENTE DE VOZ PARA HISTORIA
+        const audioHistoria = document.getElementById('audioHistoria');
+
+        document.getElementById('btnHistoria').onclick = () => { 
+            document.getElementById('menuPrincipal').style.display = 'none';
+            document.getElementById('pantallaHistoria').style.display = 'flex'; 
+        };
+
+        document.getElementById('btnVozHistoria').onclick = () => {
+            if (audioHistoria.paused) {
+                audioHistoria.play();
+            } else {
+                audioHistoria.pause();
+            }
+        };
+
+        document.getElementById('btnVolverHist').onclick = () => { 
+            document.getElementById('pantallaHistoria').style.display = 'none'; 
+            document.getElementById('menuPrincipal').style.display = 'flex';
+            audioHistoria.pause();
+            audioHistoria.currentTime = 0; 
+        };
+
+        // Mostrar/Ocultar Selección de Nave y  3D
+        document.getElementById('btnSeleccionarNave').onclick = () => { 
+            document.getElementById('menuPrincipal').style.display = 'none';
+            document.getElementById('pantallaSeleccionarNave').style.display = 'flex'; 
+
+            if (contIzq.clientWidth > 0) {
+                camera.aspect = contIzq.clientWidth / contIzq.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(contIzq.clientWidth, contIzq.clientHeight);
+            }
+        };
+        
+        document.getElementById('btnVolverNave').onclick = () => { 
+            document.getElementById('pantallaSeleccionarNave').style.display = 'none'; 
+            document.getElementById('menuPrincipal').style.display = 'flex';
+        };
+
+        
+
+        
+        //BOTONES Y PLAYLIST DE NAVES
+        
+        const playlistsTxt = {
+            abeja: "1. Fragments of Time - Daft Punk<br>2. Rock the House - Gorillaz<br>3. Mr. Blue Sky - Electric Light Orchesta<br>4. Come and Get Your Love - Redbone<br>5.  Wham Bam Shang-a- Lang - Silver",
+            kr27bb: "1. Willow Reggaeton remix - Taylor Swift, Ozuna y Yandel<br>2.  Los caminos de la vida - Los diablitos<br>3.No me queda más - Selena Quintanilla <br>4. Me rehusó - Danny Ocean<br>5. Physical - Dua Lipa",
+            jetpack: "1. Thunder - imagine Dragons <br>2. Believer - imagine Dragons<br>3. Maldito duende - héroes del silencio<br>4. Creep-radiohead<br>5. Highway to hell - ACDC.mp3",
+            ovni: "1.  Robot Rock -Daft Punk<br>2. Accidentally in love - Counting Crows<br>3. Guren no yumiya<br>4. Trough the fire and flames - Dragon force<br>5.Lo intentamos - Héroes del norte",
+            superchancho: "1. I Ran (So Far Away) - A Flock Of Seagulls<br>2. Disco Inferno - The Trammps <br>3. September - Earth, Wind & Fire<br>4. What Is Love - Haddaway<br>5. Conga - Gloria Estefan and Miami Sound Machine",
+            magenta: "1. Me Volví a Acordar de Tí - Los Ángeles de Charly<br>2. Tiene espinas el Rosal  - Grupo Cañaveral <br>3.  Llorar - Los Socios del Ritmo  <br>4. Cómo Te Voy A Olvidar - Los Ángeles Azul <br>5. Cumbia Sampuesana - Aniceto Molina"
+        };
+
+        const textoPlaylistDOM = document.getElementById('textoPlaylist');
+
+        function configurarBoton(idBoton, idNave, idAudio) {
+            const btn = document.getElementById(idBoton);
+            
+            btn.addEventListener('mouseover', () => {
+                previewGroup.clear(); 
+                previewGroup.add(modelosPreview[idNave]); 
+                textoPlaylistDOM.innerHTML = playlistsTxt[idNave]; 
+            });
+
+            btn.addEventListener('click', () => {
+                localStorage.setItem('naveSeleccionada', idNave);
+                
+                if (idAudio) {
+                    let snd = document.getElementById(idAudio);
+                    if (snd) { snd.currentTime = 0; snd.play(); }
+                }
+
+                textoPlaylistDOM.innerHTML = `<span style="color: #FFE100; font-size: 1.5vw; font-weight: bold; text-shadow: 2px 2px black;">¡NAVE SELECCIONADA!</span>`;
+                setTimeout(() => {
+                    textoPlaylistDOM.innerHTML = playlistsTxt[idNave];
+                }, 1000);
+            });
+        }
+
+        configurarBoton('btnAbeja', 'abeja', 'sonidoAbeja');
+        configurarBoton('btnKR27bb', 'kr27bb', 'sonidoKR27bb');
+        configurarBoton('btnJetpack', 'jetpack', 'sonidoJetpack');
+        configurarBoton('btnOvni', 'ovni', 'sonidoOvni');
+        configurarBoton('btnSuperchancho', 'superchancho', 'sonidoSuperchancho');
+        configurarBoton('btnMagenta', 'magenta', 'sonidoMagenta');
+
+        // Bucle de animación 3D
+        function animatePreview() {
+            requestAnimationFrame(animatePreview);
+            previewGroup.rotation.y += 0.01; 
+            renderer.render(scene, camera);
+        }
+        animatePreview();
+
+        // Reajuste si se cambia el tamaño de la ventana
+        window.addEventListener('resize', () => {
+            if (document.getElementById('pantallaSeleccionarNave').style.display === 'flex') {
+                camera.aspect = contIzq.clientWidth / contIzq.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(contIzq.clientWidth, contIzq.clientHeight);
+            }
+        });
+
+        // SONIDOS GLOBALES DE LA INTERFAZ (SHIN/SHAN)
+        const botonesUI = document.querySelectorAll('button, .zona-clickable, .btn-dif, .btn-nave-invisible');
+        const sndHover = document.getElementById('sndHover');
+        const sndClick = document.getElementById('sndClick');
+
+        botonesUI.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                if(sndHover) { sndHover.currentTime = 0; sndHover.play(); }
+            });
+            btn.addEventListener('click', () => {
+                if(sndClick) { sndClick.currentTime = 0; sndClick.play(); }
+            });
+        });
+
+    </script>
+</body>
+</html>
